@@ -1644,6 +1644,83 @@ body.cursor-hover .custom-cursor-ring {
         width: 100px;
         height: 100px;
         opacity: 0.5;
+        /* JS positions the object via translate3d in viewport px, so anchor it
+           at the viewport origin and center it on that point. The desktop
+           left/top offsets pushed it past the right edge on mobile, widening
+           the layout viewport and exposing a bare strip beside the background. */
+        top: 0;
+        left: 0;
+        margin: -50px 0 0 -50px;
+    }
+
+    /* Keep decorative layers from creating horizontal overflow */
+    html,
+    body {
+        overflow-x: hidden;
+        overflow-x: clip;
+        max-width: 100%;
+    }
+
+    /* Size fixed background layers to the real viewport instead of 100vw,
+       and use the large viewport height so mobile toolbars never reveal a gap */
+    #spline-background,
+    #bg-overlay,
+    #particle-canvas {
+        right: 0;
+        width: 100%;
+        height: 100vh;
+        height: 100lvh;
+    }
+
+    #spline-background,
+    #particle-canvas {
+        pointer-events: none;
+    }
+
+    /* Let the single contact column shrink to the viewport; the long email
+       address otherwise forces it wider than the screen */
+    .contact-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .contact-link-info {
+        min-width: 0;
+    }
+
+    .contact-link-value {
+        overflow-wrap: anywhere;
+    }
+}
+
+/* ====== RESPONSIVE — LANDSCAPE PHONES ====== */
+/* Phones in landscape are wider than 768px but need the same overflow and
+   viewport fixes for the fixed background layers */
+@media (min-width: 769px) and (max-height: 500px) and (hover: none) and (pointer: coarse) {
+    html,
+    body {
+        overflow-x: hidden;
+        overflow-x: clip;
+        max-width: 100%;
+    }
+
+    #spline-background,
+    #bg-overlay,
+    #particle-canvas {
+        right: 0;
+        width: 100%;
+        height: 100vh;
+        height: 100lvh;
+    }
+
+    #spline-background,
+    #particle-canvas {
+        pointer-events: none;
+    }
+
+    #scroll-3d-object {
+        top: 0;
+        left: 0;
+        margin: -70px 0 0 -70px;
     }
 }
 
