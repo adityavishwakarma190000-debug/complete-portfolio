@@ -37,10 +37,21 @@
     let animFrameId = null;
     let isVisible = true;
 
-    // Resize handling
+    // Logical (CSS pixel) size of the canvas
+    let width = 0;
+    let height = 0;
+
+    // Resize handling — match the canvas's rendered box so it is never
+    // stretched, and use the device pixel ratio on mobile for crisp output
     function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const rect = canvas.getBoundingClientRect();
+        width = Math.round(rect.width) || window.innerWidth;
+        height = Math.round(rect.height) || window.innerHeight;
+
+        const dpr = window.innerWidth <= 768 ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     // Particle class
@@ -50,8 +61,8 @@
         }
 
         reset() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
             this.size = CONFIG.particleMinSize + Math.random() * (CONFIG.particleMaxSize - CONFIG.particleMinSize);
             this.speedX = (Math.random() - 0.5) * CONFIG.speedMultiplier;
             this.speedY = (Math.random() - 0.5) * CONFIG.speedMultiplier;
@@ -66,10 +77,10 @@
             this.y += this.speedY;
 
             // Wrap around edges
-            if (this.x < -10) this.x = canvas.width + 10;
-            if (this.x > canvas.width + 10) this.x = -10;
-            if (this.y < -10) this.y = canvas.height + 10;
-            if (this.y > canvas.height + 10) this.y = -10;
+            if (this.x < -10) this.x = width + 10;
+            if (this.x > width + 10) this.x = -10;
+            if (this.y < -10) this.y = height + 10;
+            if (this.y > height + 10) this.y = -10;
 
             // Pulse opacity
             this.currentOpacity = this.opacity * (0.6 + 0.4 * Math.sin(time * this.pulseSpeed + this.pulsePhase));
@@ -129,7 +140,7 @@
             return;
         }
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, width, height);
 
         for (const particle of particles) {
             particle.update(time);
@@ -148,10 +159,19 @@
 
     // Debounced resize
     let resizeTimer;
-    window.addEventListener('resize', function () {
+    function onViewportChange() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function () {
+            const prevWidth = width;
+            const prevHeight = height;
             resize();
+            // Keep particles spread across the new viewport (e.g. after rotation)
+            if (prevWidth && prevHeight && (prevWidth !== width || prevHeight !== height)) {
+                for (const particle of particles) {
+                    particle.x *= width / prevWidth;
+                    particle.y *= height / prevHeight;
+                }
+            }
             // Re-init particles if count changes significantly
             const isMobile = window.innerWidth < 768;
             const targetCount = isMobile ? Math.floor(CONFIG.particleCount * 0.4) : CONFIG.particleCount;
@@ -159,7 +179,9 @@
                 init();
             }
         }, 250);
-    });
+    }
+    window.addEventListener('resize', onViewportChange);
+    window.addEventListener('orientationchange', onViewportChange);
 
     // Start
     init();

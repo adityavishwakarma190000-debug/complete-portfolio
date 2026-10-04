@@ -28,7 +28,53 @@
             import { Application } from 'https://unpkg.com/@splinetool/runtime@1.9.59/build/runtime.js';
             const canvas = document.getElementById('spline-canvas');
             const app = new Application(canvas);
-            app.load('https://prod.spline.design/jrgOvC0oJMqbGoqn/scene.splinecode');
+
+            // The scene uses an orthographic camera, so it renders at a fixed pixel
+            // size regardless of viewport. On phones that crops the ring/cube
+            // composition (~800x460px), so zoom out just enough for it to fit
+            // inside the viewport in portrait and landscape. Desktop is untouched.
+            const SCENE_WIDTH = 800;
+            const SCENE_HEIGHT = 460;
+            const FIT_PADDING = 0.95;
+            const MIN_ZOOM_FACTOR = 0.3;
+            const mobileQuery = window.matchMedia(
+                '(max-width: 768px), (max-height: 500px) and (hover: none) and (pointer: coarse)'
+            );
+            let baseZoom = null;
+            let appliedFactor = 1;
+
+            function getCameraZoom() {
+                const controls = app.controls && app.controls.orbitControls;
+                return controls && controls.object ? controls.object.zoom : null;
+            }
+
+            function fitSceneToViewport() {
+                if (baseZoom === null) baseZoom = getCameraZoom();
+                if (!baseZoom) return;
+
+                const width = canvas.clientWidth || window.innerWidth;
+                const height = canvas.clientHeight || window.innerHeight;
+                let factor = 1;
+                if (mobileQuery.matches) {
+                    const fit = Math.min(width / SCENE_WIDTH, height / SCENE_HEIGHT) * FIT_PADDING;
+                    factor = Math.min(1, Math.max(MIN_ZOOM_FACTOR, fit));
+                }
+                if (Math.abs(factor - appliedFactor) > 0.01) {
+                    app.setZoom(baseZoom * factor);
+                    appliedFactor = factor;
+                }
+            }
+
+            app.load('https://prod.spline.design/jrgOvC0oJMqbGoqn/scene.splinecode').then(function () {
+                fitSceneToViewport();
+                let resizeTimer;
+                const onViewportChange = function () {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(fitSceneToViewport, 150);
+                };
+                window.addEventListener('resize', onViewportChange);
+                window.addEventListener('orientationchange', onViewportChange);
+            });
         </script>
 
         <!-- Fallback gradient background (behind the Spline canvas) -->
@@ -262,101 +308,6 @@
                                 <span class="tech-badge">HTML</span>
                                 <span class="tech-badge">CSS</span>
                                 <span class="tech-badge">JavaScript</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="project-card" data-project="2">
-                        <div class="project-image">
-                            <div class="project-image-placeholder">
-                                <span>Project 02 Screenshot</span>
-                            </div>
-                            <div class="project-overlay">
-                                <a href="#" class="project-link" target="_blank" rel="noopener">
-                                    <span>View Live</span>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="project-info">
-                            <div class="project-meta">
-                                <span class="project-category">Mobile App</span>
-                                <span class="project-year">2024</span>
-                            </div>
-                            <h3 class="project-title">Project Name Two</h3>
-                            <p class="project-desc">
-                                Brief description of the project, technologies used, 
-                                and the problem it solves.
-                            </p>
-                            <div class="project-tech">
-                                <span class="tech-badge">React Native</span>
-                                <span class="tech-badge">Firebase</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="project-card" data-project="3">
-                        <div class="project-image">
-                            <div class="project-image-placeholder">
-                                <span>Project 03 Screenshot</span>
-                            </div>
-                            <div class="project-overlay">
-                                <a href="#" class="project-link" target="_blank" rel="noopener">
-                                    <span>View Live</span>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="project-info">
-                            <div class="project-meta">
-                                <span class="project-category">3D Experience</span>
-                                <span class="project-year">2023</span>
-                            </div>
-                            <h3 class="project-title">Project Name Three</h3>
-                            <p class="project-desc">
-                                Brief description of the project, technologies used, 
-                                and the problem it solves.
-                            </p>
-                            <div class="project-tech">
-                                <span class="tech-badge">Three.js</span>
-                                <span class="tech-badge">GSAP</span>
-                                <span class="tech-badge">WebGL</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <article class="project-card" data-project="4">
-                        <div class="project-image">
-                            <div class="project-image-placeholder">
-                                <span>Project 04 Screenshot</span>
-                            </div>
-                            <div class="project-overlay">
-                                <a href="#" class="project-link" target="_blank" rel="noopener">
-                                    <span>View Live</span>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                        <div class="project-info">
-                            <div class="project-meta">
-                                <span class="project-category">Dashboard</span>
-                                <span class="project-year">2023</span>
-                            </div>
-                            <h3 class="project-title">Project Name Four</h3>
-                            <p class="project-desc">
-                                Brief description of the project, technologies used, 
-                                and the problem it solves.
-                            </p>
-                            <div class="project-tech">
-                                <span class="tech-badge">Vue.js</span>
-                                <span class="tech-badge">D3.js</span>
-                                <span class="tech-badge">Python</span>
                             </div>
                         </div>
                     </article>
